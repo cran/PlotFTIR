@@ -27,13 +27,13 @@ for (i in seq_along(unique(sample_spectra$sample_id))) {
 file_directory <- tempdir
 
 ## ----installation_Cran, eval = FALSE------------------------------------------
-#  install.packages("PlotFTIR")
+# install.packages("PlotFTIR")
 
 ## ----installation_github, eval = FALSE----------------------------------------
-#  devtools::install_github("NRCan/PlotFTIR")
+# devtools::install_github("NRCan/PlotFTIR")
 
 ## ----library_call, eval = FALSE-----------------------------------------------
-#  library(PlotFTIR)
+# library(PlotFTIR)
 
 ## ----read_files_en------------------------------------------------------------
 spectra <- read_ftir_directory(
@@ -117,22 +117,22 @@ biodiesel |>
   zoom_in_on_range(c(2000, 1000))
 
 ## ----save_spectra, eval = FALSE-----------------------------------------------
-#  biodiesel |>
-#    ploft_ftir() |>
-#    save_plot(filename = "my_ftir_plot.png", filetype = ".png")
+# biodiesel |>
+#   ploft_ftir() |>
+#   save_plot(filename = "my_ftir_plot.png", filetype = ".png")
 
 ## ----clear_en,echo = FALSE, warning=FALSE, message=FALSE----------------------
 # This just clears out items from the environment to make sure later french code is fresh.
 rm(spectra, shifted_spectra, transmittance_spectra)
 
 ## ----installation_Cran_fr, eval = FALSE---------------------------------------
-#  install.packages("PlotFTIR")
+# install.packages("PlotFTIR")
 
 ## ----installation_github_fr, eval = FALSE-------------------------------------
-#  devtools::install_github("NRCan/PlotFTIR")
+# devtools::install_github("NRCan/PlotFTIR")
 
 ## ----library_call_fr, eval = FALSE--------------------------------------------
-#  library(PlotFTIR)
+# library(PlotFTIR)
 
 ## ----read_files_fr------------------------------------------------------------
 spectres <- read_ftir_directory(
@@ -215,7 +215,7 @@ biodiesel |>
   zoom_in_on_range(c(2000, 1000))
 
 ## ----save_spectra_fr, eval = FALSE--------------------------------------------
-#  biodiesel |>
-#    ploft_ftir() |>
-#    save_plot(filename = "mon_trace_irtf.png", filetype = ".png")
+# biodiesel |>
+#   ploft_ftir() |>
+#   save_plot(filename = "mon_trace_irtf.png", filetype = ".png")
 

@@ -1,0 +1,244 @@
+## ----include = FALSE----------------------------------------------------------
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  dpi = 300,
+  warning = FALSE,
+  message = FALSE,
+  error = TRUE,
+  out.width = "90%",
+  fig.width = 6,
+  fig.height = 4
+)
+library(PlotFTIR)
+
+## ----data---------------------------------------------------------------------
+isopropanol <- sample_spectra[sample_spectra$sample_id == 'isopropanol',]
+
+plot_ftir(isopropanol) |> move_plot_legend('bottom')
+
+## ----wavenumber_list, echo = FALSE--------------------------------------------
+peak_wavenumbers <- c(3333, 2969, 2932, 2883, 1466, 1408, 1378, 1340, 1308, 1160, 1128, 1108, 950, 816, 638)
+
+## ----sg-----------------------------------------------------------------------
+library(pracma)
+sg <- savgol(isopropanol$absorbance, fl = 13, forder = 3)
+sg_deriv <- savgol(isopropanol$absorbance, fl = 15, forder = 3, dorder = 2)
+
+plotdata <- data.frame('wavenumber' = rep(isopropanol$wavenumber, 3),
+                       'absorbance' = c(isopropanol$absorbance, sg, (sg_deriv * 20)+1), 
+                       'sample_id' = c(isopropanol$sample_id, rep('smoothed_isopropanol', length(sg)), rep('2nd deriv', length(sg_deriv))))
+
+plot_ftir(plotdata) |> move_plot_legend('bottom')
+
+## ----functions----------------------------------------------------------------
+maxima <- function(x, window=1){
+  lenx <- length(x)
+  x <- c(rep(-Inf, window), x, rep(-Inf, window))
+  m <- c()
+  for (i in seq_along(x)){
+    # don't evaluate in filler region
+    if (i <= window){
+      next
+    }
+    if (i > (lenx + window)){
+      next
+    }
+    if (max(x[seq(i-window, length.out = window)], na.rm = TRUE) < x[i] && max(x[seq(i+1, length.out = window)], na.rm = TRUE) < x[i]){
+      #x is a maxima 
+      m <- c(m, i-window)      
+    }
+  }
+  return(m)
+}
+
+minima <- function(x, window=1){
+ return(maxima(x = x*-1, window))
+}
+
+## ----isopropanol_peaks--------------------------------------------------------
+peaklist_deriv <- minima(sg_deriv, 5)
+deriv_peaks <- isopropanol$wavenumber[peaklist_deriv]
+peaklist_normal <- maxima(sg, 10)
+norm_peaks <- isopropanol$wavenumber[peaklist_normal]
+
+## ----threshold----------------------------------------------------------------
+zero_threshold <- function(x, threshold = 1e-4){
+  x[abs(x) < threshold] <- 0
+  return(x)
+}
+
+new_deriv_peaks <- isopropanol$wavenumber[minima(zero_threshold(sg_deriv, 1e-4), 5)]
+
+## ----new_norm-----------------------------------------------------------------
+new_norm_peaks <- isopropanol$wavenumber[maxima(zero_threshold(sg, 1e-1), 5)]
+
+## ----merge_peaks--------------------------------------------------------------
+all_peaks <- new_deriv_peaks
+for (i in seq_along(new_norm_peaks)) {
+  if (sum(abs(all_peaks-new_norm_peaks[i]) < 5) == 0) {
+    all_peaks <- c(all_peaks, new_norm_peaks[i])
+  }
+}
+
+## ----EMpeaksR, echo=TRUE, results='hide'--------------------------------------
+isopropanol$absorbance <- isopropanol$absorbance - min(isopropanol$absorbance, na.rm = T)
+
+library(EMpeaksR)
+n <- length(all_peaks)
+SP_ECM_PV_res <- spect_em_pvmm(x = isopropanol$wavenumber,
+                               y = isopropanol$absorbance,
+                               mu = all_peaks,
+                               sigma = rep(10, n),
+                               eta = rep(.5, n),
+                               mix_ratio = rep(1/n, n),
+                               maxit = 5000,
+                               conv.cri = 1e-2)
+
+## ----reassemble---------------------------------------------------------------
+truncated_pv <- function(x, mu, sigma, eta) {
+  (eta*dcauchy(x, mu, sqrt(2*log(2))*sigma) + (1-eta)*dnorm(x, mu, sigma)) /
+    sum(eta*dcauchy(x, mu, sqrt(2*log(2))*sigma) + (1-eta)*dnorm(x, mu, sigma))*10^4
+}
+
+y <- rep(0, length(isopropanol$wavenumber))
+
+
+for (i in seq_along(all_peaks)){
+  y <- y + SP_ECM_PV_res$mix_ratio[i] * truncated_pv(isopropanol$wavenumber,
+                                                     SP_ECM_PV_res$mu[i],
+                                                     SP_ECM_PV_res$sigma[i],
+                                                     SP_ECM_PV_res$eta[i])
+}
+
+y <- (y/max(y, na.rm = TRUE))*max(isopropanol$absorbance, na.rm = TRUE)
+
+plotdata2 <- data.frame('wavenumber' = rep(isopropanol$wavenumber, 2),
+                       'absorbance' = c(isopropanol$absorbance, y), 
+                       'sample_id' = c(isopropanol$sample_id, rep('fitted', length(sg))))
+
+plot_ftir(plotdata2, plot_title = c("FTIR Spectra of Isopropanol", "Fitted with Pseudo-Voigt peaks")) |> move_plot_legend('bottom')
+
+## ----repeat_fit, include=FALSE, eval=TRUE, results = 'hide'-------------------
+SP_ECM_DSGMM_res <- spect_em_dsgmm(x = isopropanol$wavenumber,
+                                   y = isopropanol$absorbance,
+                                   mu = all_peaks,
+                                   sigma = rep(10, n),
+                                   alpha = rep(0.01, n),
+                                   eta = rep(0.5, n),
+                                   mix_ratio = rep(1/n, n),
+                                   maxit = 5000,
+                                   conv.cri = 1e-2)
+
+truncated_dsg <- function(x, mu, sigma, alpha, eta) {
+                 ((eta*(((gamma(1-alpha)) /
+                 ((x-mu)^2+(sqrt(2*log(2))*sigma)^2)^((1-alpha)/2)) *
+                 cos((pi*alpha/2)+(1-alpha)*atan((x-mu) /
+                 (sqrt(2*log(2))*sigma))))) + (1-eta)*dnorm(x, mu, sigma)) /
+                 sum( ((eta*(((gamma(1-alpha)) /
+                 ((x-mu)^2+(sqrt(2*log(2))*sigma)^2)^((1-alpha)/2)) *
+                 cos((pi*alpha/2)+(1-alpha)*atan((x-mu) /
+                 (sqrt(2*log(2))*sigma))))) + (1-eta)*dnorm(x, mu, sigma))) * 10^4
+}
+
+y <- rep(0, length(isopropanol$wavenumber))
+
+
+for (i in seq_along(all_peaks)){
+  y <- y + SP_ECM_DSGMM_res$mix_ratio[i] * truncated_dsg(isopropanol$wavenumber,
+                                                         SP_ECM_DSGMM_res$mu[i],
+                                                         SP_ECM_DSGMM_res$sigma[i],
+                                                         SP_ECM_DSGMM_res$alpha[i],
+                                                         SP_ECM_DSGMM_res$eta[i])
+}
+
+y <- (y/max(y, na.rm = TRUE))*max(isopropanol$absorbance, na.rm = TRUE)
+
+plotdata3 <- data.frame('wavenumber' = rep(isopropanol$wavenumber, 2),
+                       'absorbance' = c(isopropanol$absorbance, y), 
+                       'sample_id' = c(isopropanol$sample_id, rep('fitted', length(sg))))
+
+## ----repeat_plot--------------------------------------------------------------
+plot_ftir(plotdata3, plot_title = c("FTIR Spectra of Isopropanol", "Fitted with Doniach-Šunjić-Gauss peaks")) |> move_plot_legend('bottom')
+
+## ----manual_peaks-------------------------------------------------------------
+all_peaks <- all_peaks[all_peaks < 3000 | all_peaks > 3600]
+all_peaks <- c(all_peaks, 1367, 1427, 1435, 1975, 2080, 2190, 2320, 2415, 2470, 2518, 2530, 2580, 2700, 2730, 2815, 2917, 3335)
+
+## ----refit, results = 'hide'--------------------------------------------------
+n <- length(all_peaks)
+SP_ECM_PV_res <- spect_em_pvmm(x = isopropanol$wavenumber,
+                               y = isopropanol$absorbance,
+                               mu = all_peaks,
+                               sigma = rep(10, n),
+                               eta = rep(.5, n),
+                               mix_ratio = rep(1/n, n),
+                               maxit = 5000,
+                               conv.cri = 1e-2)
+
+y <- {
+y <- rep(0, length(isopropanol$wavenumber))
+for (i in seq_along(all_peaks)){
+  y <- y + SP_ECM_PV_res$mix_ratio[i] * 
+    truncated_pv(isopropanol$wavenumber, SP_ECM_PV_res$mu[i], SP_ECM_PV_res$sigma[i], SP_ECM_PV_res$eta[i])
+} 
+y}
+
+y2<-Reduce("+", mapply(function(mu, sigma, eta, mix_ratio) {
+  mix_ratio * truncated_pv(ftir$wavenumber, mu, sigma, eta)
+}, res$mu, res$sigma, res$eta, res$mix_ratio, SIMPLIFY = FALSE))
+
+y3<-Reduce("+", lapply(seq_along(all_peaks), FUN = function(x) truncated_pv(isopropanol$wavenumber, mu = SP_ECM_PV_res$mu[x], SP_ECM_PV_res$sigma[x], SP_ECM_PV_res$eta[x])))
+
+y <- (y/max(y, na.rm = TRUE))*max(isopropanol$absorbance, na.rm = TRUE)
+plotdata5 <- data.frame('wavenumber' = rep(isopropanol$wavenumber, 2),
+                       'absorbance' = c(isopropanol$absorbance, y), 
+                       'sample_id' = c(isopropanol$sample_id, rep('fitted', length(sg))))
+
+SP_ECM_DSGMM_res <- spect_em_dsgmm(x = isopropanol$wavenumber,
+                                 y = isopropanol$absorbance,
+                                 mu = all_peaks,
+                                 sigma = rep(10, n),
+                                 alpha = rep(0.01, n),
+                                 eta = rep(0.5, n),
+                                 mix_ratio = rep(1/n, n),
+                                 maxit = 5000,
+                                 conv.cri = 1e-2)
+
+
+y <- rep(0, length(isopropanol$wavenumber))
+for (i in seq_along(all_peaks)){
+  y <- y + SP_ECM_DSGMM_res$mix_ratio[i] * 
+    truncated_dsg(isopropanol$wavenumber, SP_ECM_DSGMM_res$mu[i], SP_ECM_DSGMM_res$sigma[i],
+                  SP_ECM_DSGMM_res$alpha[i],SP_ECM_DSGMM_res$eta[i])
+}
+y <- (y/max(y, na.rm = TRUE))*max(isopropanol$absorbance, na.rm = TRUE)
+plotdata6 <- data.frame('wavenumber' = rep(isopropanol$wavenumber, 2),
+                       'absorbance' = c(isopropanol$absorbance, y), 
+                       'sample_id' = c(isopropanol$sample_id, rep('fitted', length(sg))))
+
+## ----replot_pv----------------------------------------------------------------
+plot_ftir(plotdata5, plot_title = c("FTIR Spectra of Isopropanol", "Fitted with Pseudo-Voigt peaks")) |> move_plot_legend('bottom')
+
+## ----replot_g-----------------------------------------------------------------
+plot_ftir(plotdata6, plot_title = c("FTIR Spectra of Isopropanol", "Fitted with Doniach-Šunjić-Gauss peaks")) |> move_plot_legend('bottom')
+
+## ----serrsBayes_fit, results = 'hide'-----------------------------------------
+library(serrsBayes)
+spc <- matrix(nrow = 1, ncol = length(isopropanol$wavenumber))
+spc[1,] <- isopropanol$absorbance
+
+lPriors <- list(scale.mu=log(11.6) - (0.4^2)/2, scale.sd=0.4, bl.smooth=10^11, bl.knots=20,
+                amp.mu=5000, amp.sd=5000, noise.sd=200, noise.nu=4)
+sd_mh <- c(rep(100, n), rep(2, n))
+
+t <- Sys.time()
+sb_res_mcmc <- fitSpectraMCMC(isopropanol$wavenumber, spc = spc, peakWL = all_peaks, lPriors = lPriors, sd_mh = sd_mh)
+t <- Sys.time() - t
+
+lPriors <- list(scale.mu=log(11.6) - (0.4^2)/2, scale.sd=0.4, bl.smooth=10^11, bl.knots=20,
+                beta.mu=5000, beta.sd=5000, noise.sd=200, noise.nu=4)
+t2 <- Sys.time()
+sb_res_smc <- fitSpectraSMC(isopropanol$wavenumber, spc = spc, peakWL = all_peaks, lPriors = lPriors)
+t2 <-Sys.time() - t
+

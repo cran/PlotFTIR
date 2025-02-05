@@ -12,6 +12,8 @@
 stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![Coveralls test
 coverage](https://coveralls.io/repos/github/NRCan/PlotFTIR/badge.svg)](https://coveralls.io/github/NRCan/PlotFTIR)
+[![CRAN
+Downloads](https://cranlogs.r-pkg.org/badges/PlotFTIR)](https://cran.r-project.org/package=PlotFTIR)
 <!-- badges: end -->
 
 ## Introduction and Installation
@@ -27,6 +29,8 @@ You can install the development version of `PlotFTIR` from
 ``` r
 # install.packages("devtools")
 devtools::install_github("NRCan/PlotFTIR")
+
+library(PlotFTIR)
 ```
 
 ## Example Plots
@@ -35,7 +39,6 @@ This is a basic example which shows you how to plot a prepared set of
 FTIR spectra:
 
 ``` r
-library(PlotFTIR)
 biodiesel_plot <- plot_ftir(biodiesel)
 biodiesel_plot
 ```
@@ -78,18 +81,15 @@ compress_low_energy(biodiesel_plot, cutoff = 2000, compression_ratio = 5)
 
 You can also add marker lines (with labels) at specific wavenumbers on
 the plots, controlling their line or text properties as needed.
+Similarly, a shaded band can be added to indicate a region.
 
 ``` r
 biodiesel_marked <- add_wavenumber_marker(biodiesel_plot,
   wavenumber = 1742,
   text = "C=O Stretch",
   label_aesthetics = list("color" = "red")
-)
-add_wavenumber_marker(biodiesel_marked,
-  wavenumber = 2920,
-  text = "C-H Stretch",
-  line_aesthetics = list("linetype" = "dashed")
-)
+) 
+add_band(biodiesel_marked, c(2750,3050), "C-H Stretch")
 ```
 
 <img src="man/figures/README-biodiesel_labelled_en-1.png" width="66.67%" />
@@ -119,6 +119,9 @@ rename_plot_sample_ids(biodiesel_plot, new_names)
 
 A helper function for the renaming is provided (see the documentation
 for `get_plot_sample_ids()`).
+
+Specific sample(s) can be highlighted (other samples greyed out) by
+calling `highlight_sample()`.
 
 Finally, plot legends are customizable (for basic changes) through a
 helper function `move_plot_legend()`.
@@ -240,17 +243,27 @@ citation("PlotFTIR")
 #> To cite package 'PlotFTIR' in publications use:
 #> 
 #>   Bulsink P (????). _PlotFTIR: Plot FTIR Spectra_. R package version
-#>   1.0.0, <https://github.com/NRCan/PlotFTIR>.
+#>   1.0.0.9000, <https://github.com/NRCan/PlotFTIR>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
 #>     title = {PlotFTIR: Plot FTIR Spectra},
 #>     author = {Philip Bulsink},
-#>     note = {R package version 1.0.0},
+#>     note = {R package version 1.0.0.9000},
 #>     url = {https://github.com/NRCan/PlotFTIR},
 #>   }
 ```
+
+## Language Settings
+
+The package has the ability to change language from English to French
+for plots on a per-plot basis (call `plot_ftir()` functions with
+`lang = 'en'` or `lang = 'fr` arguments). In addition, the default
+language can be set to English or French by setting
+`options('PlotFTIR.lang' = 'en')` or `options('PlotFTIR.lang' = 'fr')`
+respectively. This can be added to your .RProfile to persist between R
+sessions.
 
 ([English](#introduction-and-installation))
 
@@ -268,6 +281,8 @@ Vous pouvez installer la version de développement de `PlotFTIR` depuis
 ``` r
 # install.packages("devtools")
 devtools::install_github("NRCan/PlotFTIR")
+
+library(PlotFTIR)
 ```
 
 ## Exemples des tracés
@@ -321,19 +336,16 @@ compress_low_energy(biodiesel_trace, cutoff = 2000, compression_ratio = 5)
 
 Vous pouvez également ajouter des lignes de marqueur (avec des
 étiquettes) à des numéros d’onde spécifiques sur les tracés, en
-contrôlant leurs propriétés de ligne ou de texte selon vos besoins.
+contrôlant leurs propriétés de ligne ou de texte selon vos besoins. De
+même, une bande ombrée peut être ajoutée pour indiquer une région.
 
 ``` r
 biodiesel_marked <- add_wavenumber_marker(biodiesel_trace,
   wavenumber = 1742,
   text = "C=O étirement",
   label_aesthetics = list("color" = "red")
-)
-add_wavenumber_marker(biodiesel_trace,
-  wavenumber = 2920,
-  text = "C-H étirement",
-  line_aesthetics = list("linetype" = "dashed")
-)
+) 
+add_band(biodiesel_marked, c(2750,3050), "C-H étirement")
 ```
 
 <img src="man/figures/README-biodiesel_labelled_fr-1.png" width="66.67%" />
@@ -363,6 +375,9 @@ rename_plot_sample_ids(biodiesel_trace, nouveau_noms)
 
 Une fonction d’assistance pour le changement de nom est fournie (voir la
 documentation pour `get_plot_sample_ids()`).
+
+Un ou plusieurs échantillons spécifiques peuvent être mis en évidence
+(les autres échantillons étant grisés) en appelant `highlight_sample()`.
 
 Enfin, les légendes des tracés sont personnalisables (pour les
 modifications de base) via une fonction d’assistance
@@ -494,14 +509,24 @@ citation("PlotFTIR")
 #> To cite package 'PlotFTIR' in publications use:
 #> 
 #>   Bulsink P (????). _PlotFTIR: Plot FTIR Spectra_. R package version
-#>   1.0.0, <https://github.com/NRCan/PlotFTIR>.
+#>   1.0.0.9000, <https://github.com/NRCan/PlotFTIR>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
 #>   @Manual{,
 #>     title = {PlotFTIR: Plot FTIR Spectra},
 #>     author = {Philip Bulsink},
-#>     note = {R package version 1.0.0},
+#>     note = {R package version 1.0.0.9000},
 #>     url = {https://github.com/NRCan/PlotFTIR},
 #>   }
 ```
+
+## Paramètres de langue
+
+Le paquetage a la capacité de changer la langue de l’anglais au français
+pour les tracés sur une base individuelle (appeler les fonctions
+`plot_ftir()` avec les arguments `lang = 'en'` ou `lang = 'fr'`). De
+plus, la langue par défaut peut être réglée sur l’anglais ou le français
+en réglant `options('PlotFTIR.lang' = 'en')` ou
+`options('PlotFTIR.lang' = 'fr')` respectivement. Ceci peut être ajouté
+à votre .RProfile pour persister entre les sessions R.

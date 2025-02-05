@@ -1,7 +1,7 @@
 Package: PlotFTIR
 Type: Package
 Title: Plot FTIR Spectra
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
     person(given = "Philip", family = "Bulsink", email = "philip.bulsink@nrcan-rncan.gc.ca", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9668-2429")),
@@ -16,16 +16,16 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Imports: cli, rlang, scales
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Depends: R (>= 3.3)
-Suggests: testthat (>= 3.0.0), withr, ggplot2 (>= 3.0.0), ggthemes,
-        knitr, rmarkdown, ir, ChemoSpec, R.utils
+Suggests: testthat (>= 3.0.0), withr, ggplot2 (>= 3.0.0), gghighlight,
+        ggthemes, knitr, rmarkdown, ir, ChemoSpec, R.utils
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 BugReports: https://github.com/NRCan/PlotFTIR/issues
 URL: https://github.com/NRCan/PlotFTIR
 NeedsCompilation: no
-Packaged: 2024-11-12 14:55:05 UTC; pbulsink
+Packaged: 2025-02-05 14:41:21 UTC; pbulsink
 Author: Philip Bulsink [aut, cre] (<https://orcid.org/0000-0001-9668-2429>),
   Ulrich Makanda [trl] (Translated documentation to French/Traduire la
     documentation en français),
@@ -33,4 +33,4 @@ Author: Philip Bulsink [aut, cre] (<https://orcid.org/0000-0001-9668-2429>),
     of Natural Resources [cph]
 Maintainer: Philip Bulsink <philip.bulsink@nrcan-rncan.gc.ca>
 Repository: CRAN
-Date/Publication: 2024-11-13 14:20:06 UTC
+Date/Publication: 2025-02-05 15:10:02 UTC
