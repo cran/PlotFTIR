@@ -1,7 +1,7 @@
 Package: PlotFTIR
 Type: Package
 Title: Plot FTIR Spectra
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: c(
     person(given = "Philip", family = "Bulsink", email = "philip.bulsink@nrcan-rncan.gc.ca", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0001-9668-2429")),
@@ -25,12 +25,13 @@ VignetteBuilder: knitr
 BugReports: https://github.com/NRCan/PlotFTIR/issues
 URL: https://github.com/NRCan/PlotFTIR
 NeedsCompilation: no
-Packaged: 2025-03-31 15:11:21 UTC; pbulsink
-Author: Philip Bulsink [aut, cre] (<https://orcid.org/0000-0001-9668-2429>),
+Packaged: 2025-08-25 15:30:05 UTC; pbulsink
+Author: Philip Bulsink [aut, cre] (ORCID:
+    <https://orcid.org/0000-0001-9668-2429>),
   Ulrich Makanda [trl] (Translated documentation to French/Traduire la
     documentation en français),
   His Majesty the King in Right of Canada, as represented by the Minister
     of Natural Resources [cph]
 Maintainer: Philip Bulsink <philip.bulsink@nrcan-rncan.gc.ca>
 Repository: CRAN
-Date/Publication: 2025-03-31 15:30:06 UTC
+Date/Publication: 2025-08-25 15:50:02 UTC
